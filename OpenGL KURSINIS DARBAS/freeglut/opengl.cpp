@@ -287,7 +287,7 @@ void reshape( int w, int h )
 
 void Keyboard_keys(unsigned char key, int x, int y){
 	if ((key=='z' || key=='Z') && (C_Distance<58.0) ) C_Distance+=0.25;
-    if ((key=='x' || key=='X') && (C_Distance>3) ) C_Distance-=0.25;
+    if ((key=='x' || key=='X') && (C_Distance>1) ) C_Distance-=0.25;
 	if (key=='w' || key=='W') player.x+=1;
 	if (key=='s' || key =='S') player.x-=1;
 	if (key=='q' || key=='Q') {theta+=0.1;phi += 0.1;}
