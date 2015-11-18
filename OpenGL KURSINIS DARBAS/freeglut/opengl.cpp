@@ -15,6 +15,12 @@ using namespace std;
 int mapWidth = 40;
 int mapLength = 40;
 
+float theta;
+float phi;
+
+float eyeX;
+float eyeY;
+
 int glWin; //used to destroy window
 
 struct Maps {int x,z;} map; //Structure used to store map length and width
@@ -22,6 +28,19 @@ struct Maps {int x,z;} map; //Structure used to store map length and width
 GLuint GroundTexture; //Ground image
 GLuint WallTexture; //Ground image
 
+float	lightAmb [] = { 0.03, 0.03, 0.03 };
+float	lightDif [] = { 0.95, 0.95, 0.95 };
+float	lightPos [] = { 40,  40,  40};
+
+
+struct Player	//
+{
+    int x,y,z;	//player koordinates on map
+    int dx,dz;	//what koordinates actualy render uses
+    bool isGo;	//is player going. used to animate movement
+} player, ex;		//created also ex, when we reac other object, game will be over.
+	
+float C_Distance; //came distance to object
 GLuint loadTexture(Image* image) {
     GLuint textureId;
     glGenTextures(1, &textureId);
@@ -188,30 +207,47 @@ void display(){
 
     glMatrixMode( GL_MODELVIEW );
     glLoadIdentity();
-	
-	LoadImages();
 
-	gluLookAt(4,-4,2,30,-40,0,0,0,1);
+	eyeX = player.x*2.0+1 + 8*cos(phi)*sin(theta);
+	eyeY = player.y*2.0-1 - 8*sin(phi)*sin(theta);
+	
+	
+	gluLookAt(eyeX,eyeY,C_Distance,player.x*2.0+1,-player.y*2.0-1,1,0,0,1);
+
+	
+
 
 	glPushMatrix();
-	for(int i=0;i<map.x;i++)
-		for(int j=0;j<map.z;j++){
-			drawFloor(i*2,j*-2,i*2+2.0,j*(-2)-2.0);
+		for(int i=0;i<map.x;i++)
+			for(int j=0;j<map.z;j++){
+				drawFloor(i*2,j*-2,i*2+2.0,j*(-2)-2.0);
+			}
+	glPopMatrix();
+
+
+	glPushMatrix();
+		for(int i=0;i<map.x;i++){
+			drawWall(i*2.0,0.0,2.0);
+			drawWall(i*2.0,(map.x-1)*-2.0,2.0);
+		}
+		for(int j=2;j<map.z-2;j+=2)
+		for(int i=2;i<map.x-2;i+=2){
+			drawWall(i*2.0,j*-2.0,2.0);
+		
+		}
+
+		for(int i=0;i<map.z;i++){
+			drawWall(0.0,i*-2.0,2.0);
+			drawWall(map.z*2.0,i*-2.0,2.0);
 		}
 	glPopMatrix();
 
-
-	glPushMatrix();
-	for(int i=0;i<map.x;i++){
-		drawWall(i*2.0,0.0,2.0);
-		drawWall(i*2.0,(map.x-1)*-2.0,2.0);
-	}
-
-	for(int i=0;i<map.z;i++){
-		drawWall(0.0,i*-2.0,2.0);
-		drawWall(map.z*2.0,i*-2.0,2.0);
-	}
-	glPopMatrix();
+	glPushMatrix(); 
+		glTranslatef (player.x*2.0+1,-player.y*2.0-1, 1.0);
+		glColor3d(0,0,1);
+		glutSolidSphere(1.0,100,100);
+		glColor3d(1,1,1);
+    glPopMatrix(); 
 
 	glutSwapBuffers();
 }
@@ -219,7 +255,22 @@ void display(){
 void init(){
 	map.x = mapWidth;
 	map.z = mapLength;
+	player.x=1; player.y=1; player.isGo=false;
+	C_Distance = 3;
 
+	glClearColor( 0.0, 0.0, 0.0, 1.0 );
+    glEnable( GL_DEPTH_TEST );
+    glEnable( GL_TEXTURE_2D );
+   
+    glPixelStorei ( GL_PACK_ALIGNMENT, 1 );
+    glPixelStorei ( GL_UNPACK_ALIGNMENT, 1 );
+    glShadeModel (GL_SMOOTH);
+    glLightfv    ( GL_LIGHT0, GL_AMBIENT,  lightAmb );
+    glLightfv    ( GL_LIGHT0, GL_DIFFUSE,  lightDif );
+    //glLightfv    ( GL_LIGHT0, GL_POSITION, lightPos );
+    glEnable ( GL_LIGHT0 );
+    glEnable ( GL_LIGHTING );
+    glEnable(GL_COLOR_MATERIAL);
 }
 
 void reshape( int w, int h )
@@ -235,7 +286,13 @@ void reshape( int w, int h )
 }
 
 void Keyboard_keys(unsigned char key, int x, int y){
-	
+	if ((key=='z' || key=='Z') && (C_Distance<58.0) ) C_Distance+=0.25;
+    if ((key=='x' || key=='X') && (C_Distance>3) ) C_Distance-=0.25;
+	if (key=='w' || key=='W') player.x+=1;
+	if (key=='s' || key =='S') player.x-=1;
+	if (key=='q' || key=='Q') {theta+=0.1;phi += 0.1;}
+	if (key=='e' || key =='E') {phi -= 0.1; theta-=0.1;}
+	glutPostRedisplay ();
 }
 
 void halt(bool f);
@@ -248,6 +305,7 @@ int main(int argc, char **argv) {
 	init();
 
     glutReshapeFunc (reshape);
+	LoadImages();
     glutDisplayFunc (display);
 
 	glutKeyboardFunc( Keyboard_keys );
@@ -255,7 +313,6 @@ int main(int argc, char **argv) {
     glEnable (GL_DEPTH_TEST); /* Enable hidden-surface-removal */
  
     glutMainLoop ();
- 
     return 0;
 }
 

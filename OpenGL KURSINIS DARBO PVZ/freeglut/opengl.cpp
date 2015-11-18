@@ -29,6 +29,7 @@ int glWin,pathLen,myLen=0;
 
 struct Tpos
 {char x,y;};
+
 struct Player
 {
     int x,y,z;
